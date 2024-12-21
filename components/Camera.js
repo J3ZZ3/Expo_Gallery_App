@@ -52,7 +52,12 @@ export default function Camera({ onMediaSaved }) {
    const saveMedia = async (metadata) => {
     try {
       await insertMedia(metadata.uri, metadata.timestamp, metadata.geolocation.latitude, metadata.geolocation.longitude);
-      Alert.alert("Photo saved!", `Location: ${metadata.geolocation.latitude}, ${metadata.geolocation.longitude}`);
+      
+      // Format the date from the timestamp
+      const date = new Date(metadata.timestamp);
+      const formattedDate = date.toLocaleString(); // Format date to a readable string
+
+      Alert.alert("Photo saved!", `Date: ${formattedDate}\nLocation: ${metadata.geolocation.latitude}, ${metadata.geolocation.longitude}`);
     } catch (error) {
       console.error("Error saving media:", error);
     }
