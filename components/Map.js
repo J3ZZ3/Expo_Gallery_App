@@ -3,22 +3,15 @@ import { View } from 'react-native';
 import MapView, { Marker } from 'react-native-maps';
 import { fetchMedia } from './Database';
 
-const Map = () => {
-  const [media, setMedia] = useState([]);
-
-  useEffect(() => {
-    fetchMedia(setMedia);
-  }, []);
+const Map = ({ location }) => {
+  if (!location) return null; // Return null if no location is provided
 
   return (
     <MapView style={{ flex: 1 }}>
-      {media.map(item => (
-        <Marker
-          key={item.id}
-          coordinate={{ latitude: item.latitude, longitude: item.longitude }}
-          title={`Photo taken at ${item.timestamp}`}
-        />
-      ))}
+      <Marker
+        coordinate={location}
+        title={`Photo taken at ${location.latitude}, ${location.longitude}`}
+      />
     </MapView>
   );
 };

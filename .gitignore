@@ -1,3 +1,17 @@
+- Creating native directory (./android)
+✔ Created native directory
+- Updating package.json
+✔ Updated package.json
+- Running prebuild
+✖ Prebuild failed
+TypeError: [android.styles]: withAndroidStylesBaseMod: config_plugins_1.AndroidConfig.Styles.getAppThemeGroup is not a function
+TypeError: [android.styles]: withAndroidStylesBaseMod: config_plugins_1.AndroidConfig.Styles.getAppThemeGroup is not a function
+    at setNavigationBarStyles (/home/expo/workingdir/build/node_modules/expo-navigation-bar/plugin/build/withNavigationBar.js:149:55)
+    at /home/expo/workingdir/build/node_modules/expo-navigation-bar/plugin/build/withNavigationBar.js:132:29
+    at action (/home/expo/workingdir/build/node_modules/@expo/config-plugins/build/plugins/withMod.js:199:29)
+    at interceptingMod (/home/expo/workingdir/build/node_modules/@expo/config-plugins/build/plugins/withMod.js:104:27)
+    at action (/home/expo/workingdir/build/node_modules/@expo/config-plugins/build/plugins/withMod.js:204:14)
+    at async interceptingMod (/home/expo/workingdir/build/node_modules/@expo/config-plugins/build/plugins/withMod.js:104:21)
 # Learn more https://docs.github.com/en/get-started/getting-started-with-git/ignoring-files
 
 # dependencies
