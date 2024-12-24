@@ -1,19 +1,53 @@
 import React, { useEffect, useState } from 'react';
-import { View } from 'react-native';
+import { View, Text } from 'react-native';
 import MapView, { Marker } from 'react-native-maps';
-import { fetchMedia } from './Database';
+import * as Location from 'expo-location';
+
+const getCityName = async (latitude, longitude) => {
+  try {
+    const geocode = await Location.reverseGeocodeAsync({ latitude, longitude });
+    if (geocode.length > 0) {
+      const { city, region } = geocode[0];
+      return city || region || 'Unknown Location';
+    }
+  } catch (error) {
+    console.error('Error fetching city name:', error);
+  }
+  return 'Unknown Location';
+};
 
 const Map = ({ location }) => {
-  if (!location) return null; // Return null if no location is provided
+  const [city, setCity] = useState('');
+
+  useEffect(() => {
+    if (location) {
+      getCityName(location.latitude, location.longitude).then(setCity);
+    }
+  }, [location]);
+
+  if (!location) return <Text>Location not provided</Text>;
 
   return (
-    <MapView style={{ flex: 1 }}>
-      <Marker
-        coordinate={location}
-        title={`Photo taken at ${location.latitude}, ${location.longitude}`}
-      />
-    </MapView>
+    <View style={{ flex: 1 }}>
+      <MapView style={{ flex: 1 }} initialRegion={{
+        latitude: location.latitude,
+        longitude: location.longitude,
+        latitudeDelta: 0.0922,
+        longitudeDelta: 0.0421,
+      }}>
+        <Marker
+          coordinate={location}
+          title={`Closest city: ${city}`}
+          description={`Coordinates: ${location.latitude}, ${location.longitude}`}
+        />
+      </MapView>
+      <View style={{ position: 'absolute', bottom: 20, alignSelf: 'center' }}>
+        <Text style={{ fontSize: 18, color: 'black' }}>
+          Closest city: {city}
+        </Text>
+      </View>
+    </View>
   );
 };
 
-export default Map; 
+export default Map;

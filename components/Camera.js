@@ -1,14 +1,13 @@
 import { CameraView, useCameraPermissions, useMicrophonePermissions } from 'expo-camera';
 import { useRef, useState } from 'react';
+import { useRouter } from 'expo-router';  // Import useRouter hook
 import { Button, StyleSheet, Text, Pressable, View, Alert } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import AsyncStorage from '@react-native-async-storage/async-storage';
-import { useNavigation } from '@react-navigation/native';
 import * as Location from 'expo-location'; // Import Location API
 import { insertMedia } from './Database'; // Import the database functions
 
 export default function Camera({ onMediaSaved }) {
-  const navigation = useNavigation();
+  const router = useRouter();  // Initialize router
   const [facing, setFacing] = useState('back');
   const [permission, requestPermission] = useCameraPermissions();
   const camera = useRef(null);
@@ -27,46 +26,68 @@ export default function Camera({ onMediaSaved }) {
       </View>
     );
   }
-   const takePicture = async () => {
+
+  const getCityName = async (latitude, longitude) => {
+    try {
+      const geocode = await Location.reverseGeocodeAsync({ latitude, longitude });
+      if (geocode.length > 0) {
+        const { city, region } = geocode[0];
+        return city || region || 'Unknown Location';
+      }
+    } catch (error) {
+      console.error('Error fetching city name:', error);
+    }
+    return 'Unknown Location';
+  };
+
+  const takePicture = async () => {
     if (camera.current) {
       const photo = await camera.current.takePictureAsync();
       const { status } = await Location.requestForegroundPermissionsAsync();
       if (status === 'granted') {
         const location = await Location.getCurrentPositionAsync({});
+        const cityName = await getCityName(location.coords.latitude, location.coords.longitude);
+
         const metadata = {
           timestamp: new Date().toISOString(),
           geolocation: {
             latitude: location.coords.latitude,
             longitude: location.coords.longitude,
+            city: cityName,
           },
           uri: photo.uri,
         };
-        await saveMedia(metadata); // Save metadata along with the image
-        onMediaSaved(); // Notify that media has been saved
+
+        await saveMedia(metadata);
+        onMediaSaved();
       } else {
-        Alert.alert("Permission to access location was denied");
+        Alert.alert('Permission to access location was denied');
       }
     }
   };
    
-   const saveMedia = async (metadata) => {
+  const saveMedia = async (metadata) => {
     try {
-      await insertMedia(metadata.uri, metadata.timestamp, metadata.geolocation.latitude, metadata.geolocation.longitude);
-      
-      // Format the date from the timestamp
-      const date = new Date(metadata.timestamp);
-      const formattedDate = date.toLocaleString(); // Format date to a readable string
+      await insertMedia(
+        metadata.uri,
+        metadata.timestamp,
+        metadata.geolocation.latitude,
+        metadata.geolocation.longitude,
+        metadata.geolocation.city
+      );
 
-      Alert.alert("Photo saved!", `Date: ${formattedDate}\nLocation: ${metadata.geolocation.latitude}, ${metadata.geolocation.longitude}`);
+      Alert.alert(
+        'Photo saved!',
+        `City: ${metadata.geolocation.city}\nDate: ${new Date(metadata.timestamp).toLocaleString()}`
+      );
     } catch (error) {
-      console.error("Error saving media:", error);
+      console.error('Error saving media:', error);
     }
   };
 
   const openGallery = () => {
-    navigation.navigate('gallery');
+    router.push('/gallery');  // Use router.push instead of navigation.navigate
   };
-
   return (
     <View style={styles.container}>
       <CameraView style={styles.camera} facing={facing} ref={camera}>

@@ -7,16 +7,17 @@ export const init = async () => {
   await AsyncStorage.setItem(MEDIA_KEY, JSON.stringify([]));
 };
 
-export const insertMedia = async (uri, timestamp, latitude, longitude) => {
+export const insertMedia = async (uri, timestamp, latitude, longitude, city) => {
   try {
     const existingMedia = await AsyncStorage.getItem(MEDIA_KEY);
     const media = existingMedia ? JSON.parse(existingMedia) : [];
-    media.push({ uri, timestamp, latitude, longitude });
+    media.push({ uri, timestamp, latitude, longitude, city });
     await AsyncStorage.setItem(MEDIA_KEY, JSON.stringify(media));
   } catch (error) {
     console.error("Error saving media:", error);
   }
 };
+
 
 export const fetchMedia = async (callback) => {
   try {
@@ -26,4 +27,18 @@ export const fetchMedia = async (callback) => {
   } catch (error) {
     console.error("Error fetching media:", error);
   }
-}; 
+};
+
+export const deleteMedia = async (uri) => {
+  try {
+    const existingMedia = await AsyncStorage.getItem(MEDIA_KEY);
+    const media = existingMedia ? JSON.parse(existingMedia) : [];
+    
+    // Filter out the media with the given uri
+    const updatedMedia = media.filter(item => item.uri !== uri);
+    
+    await AsyncStorage.setItem(MEDIA_KEY, JSON.stringify(updatedMedia));
+  } catch (error) {
+    console.error("Error deleting media:", error);
+  }
+};
