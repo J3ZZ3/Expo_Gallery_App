@@ -1,19 +1,26 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, FlatList, StyleSheet, TouchableOpacity, Image, RefreshControl, ImageBackground, Alert } from 'react-native';
-import { fetchMedia, deleteMedia } from '../components/Database';  // Import deleteMedia function
+import { View, FlatList, StyleSheet, TouchableOpacity, Image, RefreshControl, ImageBackground, Alert, TextInput, Button, Modal, Text } from 'react-native';
+import { fetchMedia, deleteMedia } from '../components/Database';
 import { useRouter } from 'expo-router';
-import Icon from 'react-native-vector-icons/FontAwesome';  // Import the Icon component
-
-
+import Icon from 'react-native-vector-icons/FontAwesome';
 
 const Gallery = () => {
   const router = useRouter();
   const [media, setMedia] = useState([]);
+  const [filteredMedia, setFilteredMedia] = useState([]);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [startDate, setStartDate] = useState('');
+  const [endDate, setEndDate] = useState('');
   const [refreshing, setRefreshing] = useState(false);
+  const [modalVisible, setModalVisible] = useState(false);
 
   useEffect(() => {
     loadMedia();
   }, []);
+
+  useEffect(() => {
+    applyFilters();
+  }, [searchQuery, startDate, endDate, media]);
 
   const loadMedia = async () => {
     setRefreshing(true);
@@ -21,6 +28,28 @@ const Gallery = () => {
       setMedia(fetchedMedia);
       setRefreshing(false);
     });
+  };
+
+  const applyFilters = () => {
+    let filtered = media;
+
+    if (searchQuery) {
+      filtered = filtered.filter((item) =>
+        item.city?.toLowerCase().includes(searchQuery.toLowerCase())
+      );
+    }
+
+    if (startDate && endDate) {
+      const start = new Date(startDate);
+      const end = new Date(endDate);
+
+      filtered = filtered.filter((item) => {
+        const itemDate = new Date(item.timestamp);
+        return itemDate >= start && itemDate <= end;
+      });
+    }
+
+    setFilteredMedia(filtered);
   };
 
   const onRefresh = () => {
@@ -31,34 +60,28 @@ const Gallery = () => {
     router.push({
       pathname: '/imageView',
       params: {
-        uri: encodeURI(item.uri), // Ensure the URI is properly encoded
+        uri: encodeURI(item.uri),
         latitude: item.latitude,
         longitude: item.longitude,
         timestamp: item.timestamp,
       },
     });
   };
-  
 
   const deleteImage = async (uri) => {
     try {
-      // Confirm deletion
       Alert.alert(
         "Delete Image",
         "Are you sure you want to delete this image?",
         [
-          {
-            text: "Cancel",
-            style: "cancel"
-          },
+          { text: "Cancel", style: "cancel" },
           {
             text: "Delete",
             onPress: async () => {
-              // Call the delete function from Database.js
-              await deleteMedia(uri);  // Use the deleteMedia function to delete from AsyncStorage
-              setMedia(prevMedia => prevMedia.filter(item => item.uri !== uri));  // Update state to remove deleted item
-            }
-          }
+              await deleteMedia(uri);
+              setMedia((prevMedia) => prevMedia.filter((item) => item.uri !== uri));
+            },
+          },
         ]
       );
     } catch (error) {
@@ -70,25 +93,68 @@ const Gallery = () => {
     return (
       <TouchableOpacity onPress={() => handleImagePress(item)} style={styles.itemContainer}>
         <TouchableOpacity onPress={() => deleteImage(item.uri)} style={styles.deleteButton}>
-          <Icon name="trash" size={30} color="white" /> 
+          <Icon name="trash" size={30} color="white" />
         </TouchableOpacity>
         <Image source={{ uri: item.uri }} style={styles.image} />
       </TouchableOpacity>
     );
   };
-  
+
   return (
     <ImageBackground source={require('../assets/images/camera.jpg')} style={styles.backgroundImage}>
       <View style={styles.container}>
+        {/* Search Bar */}
+        <TextInput
+          style={styles.searchBar}
+          placeholder="Search by City"
+          placeholderTextColor="gray"
+          value={searchQuery}
+          onChangeText={(text) => setSearchQuery(text)}
+        />
+
+        {/* Filter Button */}
+        <Button title="Filter by Date Range" onPress={() => setModalVisible(true)} />
+
+        {/* Modal for Date Range Input */}
+        <Modal
+          animationType="slide"
+          transparent={true}
+          visible={modalVisible}
+          onRequestClose={() => setModalVisible(false)}
+        >
+          <View style={styles.modalContainer}>
+            <View style={styles.modalContent}>
+              <Text style={styles.modalTitle}>Filter by Date Range</Text>
+              <TextInput
+                style={styles.dateInput}
+                placeholder="Start Date (YYYY-MM-DD)"
+                placeholderTextColor="gray"
+                value={startDate}
+                onChangeText={(text) => setStartDate(text)}
+              />
+              <TextInput
+                style={styles.dateInput}
+                placeholder="End Date (YYYY-MM-DD)"
+                placeholderTextColor="gray"
+                value={endDate}
+                onChangeText={(text) => setEndDate(text)}
+              />
+              <View style={styles.modalButtons}>
+                <Button title="Apply" onPress={applyFilters} />
+                <Button title="Cancel" onPress={() => setModalVisible(false)} color="red" />
+              </View>
+            </View>
+          </View>
+        </Modal>
+
+        {/* Media List */}
         <FlatList
-          data={media}
+          data={filteredMedia}
           keyExtractor={(item) => item.uri}
           renderItem={renderItem}
           numColumns={3}
           columnWrapperStyle={styles.row}
-          refreshControl={
-            <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
-          }
+          refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
         />
       </View>
     </ImageBackground>
@@ -125,23 +191,6 @@ const styles = StyleSheet.create({
     borderRadius: 10,
     resizeMode: 'cover',
   },
-  videoContainer: {
-    position: 'relative',
-  },
-  videoOverlay: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: 'rgba(0,0,0,0.2)',
-  },
-  playIcon: {
-    fontSize: 24,
-    color: 'white',
-  },
   deleteButton: {
     position: 'absolute',
     top: 5,
@@ -151,9 +200,46 @@ const styles = StyleSheet.create({
     padding: 5,
     zIndex: 1,
   },
-  deleteText: {
+  searchBar: {
+    height: 40,
+    borderColor: 'white',
+    borderWidth: 1,
+    borderRadius: 5,
+    marginBottom: 10,
+    paddingHorizontal: 10,
+    color: 'white', // Search text color
+  },
+  modalContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+  },
+  modalContent: {
+    backgroundColor: '#000000',
+    padding: 20,
+    borderRadius: 10,
+    width: '80%',
+  },
+  modalTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    marginBottom: 10,
+    textAlign: 'center',
     color: 'white',
-    fontSize: 12,
+  },
+  dateInput: {
+    height: 40,
+    borderColor: 'white',
+    borderWidth: 1,
+    borderRadius: 5,
+    marginBottom: 10,
+    paddingHorizontal: 10,
+    color: 'white',
+  },
+  modalButtons: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
   },
 });
 
