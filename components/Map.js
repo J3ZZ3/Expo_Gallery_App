@@ -41,11 +41,6 @@ const Map = ({ location }) => {
           description={`Coordinates: ${location.latitude}, ${location.longitude}`}
         />
       </MapView>
-      <View style={{ position: 'absolute', bottom: 20, alignSelf: 'center' }}>
-        <Text style={{ fontSize: 18, color: 'black' }}>
-          Closest city: {city}
-        </Text>
-      </View>
     </View>
   );
 };

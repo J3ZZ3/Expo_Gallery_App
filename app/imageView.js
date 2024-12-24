@@ -7,8 +7,9 @@ import { deleteMedia } from '../components/Database';
 import * as Location from 'expo-location';
 
 export default function ImageView() {
-  const { uri, latitude, longitude, timestamp } = useLocalSearchParams();
+  const { uri, latitude, longitude, timestamp, id } = useLocalSearchParams(); // Access the ID
   const [city, setCity] = useState(null);
+  const [imageError, setImageError] = useState(false); // Track if there's an error with the image
   const router = useRouter();
 
   useEffect(() => {
@@ -36,23 +37,28 @@ export default function ImageView() {
     getCityName();
   }, [latitude, longitude]);
 
-  const handleDelete = async () => {
-    Alert.alert(
-      "Delete Image",
-      "Are you sure you want to delete this image?",
-      [
-        { text: "Cancel", style: "cancel" },
-        { 
-          text: "Delete", 
-          style: "destructive",
-          onPress: async () => {
-            await deleteMedia(uri);
-            router.back();
-          }
-        }
-      ]
-    );
+  // Function to check if the image URI is valid
+  const checkImageURI = async (imageUri) => {
+    try {
+      const response = await fetch(imageUri, { method: 'HEAD' });
+      if (response.ok) {
+        setImageError(false);
+      } else {
+        setImageError(true);
+      }
+    } catch (error) {
+      setImageError(true);
+      console.error('Error fetching image:', error);
+    }
   };
+
+  useEffect(() => {
+    if (uri) {
+      checkImageURI(uri); // Check the image URI when the component mounts
+    }
+  }, [uri]);
+
+  
 
   const formattedDate = timestamp ? new Date(timestamp).toLocaleString() : 'Unknown Date';
   
@@ -63,7 +69,16 @@ export default function ImageView() {
 
   return (
     <View style={styles.container}>
-      <Image source={{ uri }} style={styles.image} />
+      {/* Display placeholder if image fails to load */}
+      <Image
+  source={uri ? { uri } : require('../assets/images/placeholder.jpg')}
+  style={styles.image}
+  onError={(error) => {
+    console.error('Error loading image:', error.nativeEvent.error);
+    setImageError(true);
+  }}
+/>
+
       
       <View style={styles.detailsContainer}>
         <Text style={styles.detailsText}>Date: {formattedDate}</Text>
@@ -75,11 +90,6 @@ export default function ImageView() {
       <View style={styles.mapContainer}>
         <Map location={location} />
       </View>
-
-      <Pressable style={styles.deleteButton} onPress={handleDelete}>
-        <Ionicons name="trash" size={24} color="white" />
-        <Text style={styles.buttonText}>Delete Image</Text>
-      </Pressable>
     </View>
   );
 }
@@ -87,13 +97,13 @@ export default function ImageView() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: 'black',
+    backgroundColor: '#000000',
   },
   image: {
     width: '100%',
     height: '50%',
     resizeMode: 'contain',
-    backgroundColor: 'red'
+    backgroundColor: '#000000', // Set a background color to show if image fails
   },
   detailsContainer: {
     padding: 15,

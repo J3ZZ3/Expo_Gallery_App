@@ -11,6 +11,7 @@ export default function Camera({ onMediaSaved }) {
   const [facing, setFacing] = useState('back');
   const [permission, requestPermission] = useCameraPermissions();
   const camera = useRef(null);
+  
 
   // Check if permission is still loading
   if (permission === null) {
