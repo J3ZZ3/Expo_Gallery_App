@@ -1,10 +1,13 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
-const MEDIA_KEY = 'media'; // Key for storing media in AsyncStorage
+const MEDIA_KEY = 'media'; 
 
 export const init = async () => {
-  // No need to create a table, just ensure the key exists
-  await AsyncStorage.setItem(MEDIA_KEY, JSON.stringify([]));
+  try {
+    await AsyncStorage.setItem(MEDIA_KEY, JSON.stringify([]));
+  } catch (error) {
+    console.error("Error initializing database:", error);
+  }
 };
 
 export const insertMedia = async (uri, timestamp, latitude, longitude, city) => {
@@ -17,7 +20,6 @@ export const insertMedia = async (uri, timestamp, latitude, longitude, city) => 
     console.error("Error saving media:", error);
   }
 };
-
 
 export const fetchMedia = async (callback) => {
   try {
@@ -34,7 +36,6 @@ export const deleteMedia = async (uri) => {
     const existingMedia = await AsyncStorage.getItem(MEDIA_KEY);
     const media = existingMedia ? JSON.parse(existingMedia) : [];
     
-    // Filter out the media with the given uri
     const updatedMedia = media.filter(item => item.uri !== uri);
     
     await AsyncStorage.setItem(MEDIA_KEY, JSON.stringify(updatedMedia));

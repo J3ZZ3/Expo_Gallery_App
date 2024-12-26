@@ -103,7 +103,7 @@ const Gallery = () => {
   return (
     <ImageBackground source={require('../assets/images/camera.jpg')} style={styles.backgroundImage}>
       <View style={styles.container}>
-        {/* Search Bar */}
+        {}
         <TextInput
           style={styles.searchBar}
           placeholder="Search by City"
@@ -112,10 +112,10 @@ const Gallery = () => {
           onChangeText={(text) => setSearchQuery(text)}
         />
 
-        {/* Filter Button */}
+        {}
         <Button title="Filter by Date Range" onPress={() => setModalVisible(true)} />
 
-        {/* Modal for Date Range Input */}
+        {}
         <Modal
           animationType="slide"
           transparent={true}
@@ -147,7 +147,7 @@ const Gallery = () => {
           </View>
         </Modal>
 
-        {/* Media List */}
+        {}
         <FlatList
           data={filteredMedia}
           keyExtractor={(item) => item.uri}
@@ -207,7 +207,7 @@ const styles = StyleSheet.create({
     borderRadius: 5,
     marginBottom: 10,
     paddingHorizontal: 10,
-    color: 'white', // Search text color
+    color: 'white',
   },
   modalContainer: {
     flex: 1,

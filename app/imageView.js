@@ -7,13 +7,12 @@ import { deleteMedia } from '../components/Database';
 import * as Location from 'expo-location';
 
 export default function ImageView() {
-  const { uri, latitude, longitude, timestamp, id } = useLocalSearchParams(); // Access the ID
+  const { uri, latitude, longitude, timestamp, id } = useLocalSearchParams();
   const [city, setCity] = useState(null);
-  const [imageError, setImageError] = useState(false); // Track if there's an error with the image
+  const [imageError, setImageError] = useState(false);
   const router = useRouter();
 
   useEffect(() => {
-    // Function to fetch city name from coordinates
     const getCityName = async () => {
       if (latitude && longitude) {
         try {
@@ -37,7 +36,6 @@ export default function ImageView() {
     getCityName();
   }, [latitude, longitude]);
 
-  // Function to check if the image URI is valid
   const checkImageURI = async (imageUri) => {
     try {
       const response = await fetch(imageUri, { method: 'HEAD' });
@@ -54,37 +52,49 @@ export default function ImageView() {
 
   useEffect(() => {
     if (uri) {
-      checkImageURI(uri); // Check the image URI when the component mounts
+      checkImageURI(uri);
     }
   }, [uri]);
 
-  
-
   const formattedDate = timestamp ? new Date(timestamp).toLocaleString() : 'Unknown Date';
-  
+
   const location = {
     latitude: latitude ? parseFloat(latitude) : 0,
     longitude: longitude ? parseFloat(longitude) : 0,
   };
 
+  const handleDelete = async () => {
+    try {
+      await deleteMedia(uri);
+      Alert.alert('Image deleted successfully');
+      router.push('/gallery');
+    } catch (error) {
+      console.error('Error deleting image:', error);
+      Alert.alert('Error deleting image');
+    }
+  };
+
   return (
     <View style={styles.container}>
-      {/* Display placeholder if image fails to load */}
+      {}
       <Image
-  source={uri ? { uri } : require('../assets/images/placeholder.jpg')}
-  style={styles.image}
-  onError={(error) => {
-    console.error('Error loading image:', error.nativeEvent.error);
-    setImageError(true);
-  }}
-/>
+        source={uri ? { uri } : require('../assets/images/placeholder.jpg')}
+        style={styles.image}
+        onError={(error) => {
+          console.error('Error loading image:', error.nativeEvent.error);
+          setImageError(true);
+        }}
+      />
 
-      
       <View style={styles.detailsContainer}>
         <Text style={styles.detailsText}>Date: {formattedDate}</Text>
         <Text style={styles.detailsText}>
           Location: {city || 'Fetching location...'}
         </Text>
+        <Pressable style={styles.deleteButton} onPress={handleDelete}>
+          <Ionicons name="trash" size={24} color="white" />
+          <Text style={styles.buttonText}>Delete Image</Text>
+        </Pressable>
       </View>
 
       <View style={styles.mapContainer}>
@@ -103,7 +113,7 @@ const styles = StyleSheet.create({
     width: '100%',
     height: '50%',
     resizeMode: 'contain',
-    backgroundColor: '#000000', // Set a background color to show if image fails
+    backgroundColor: '#000000',
   },
   detailsContainer: {
     padding: 15,
