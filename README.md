@@ -26,8 +26,8 @@ The Gallery App is a React Native application that allows users to capture, view
 ### Steps
 1. Clone the repository:
    ```bash
-   git clone https://github.com/yourusername/gallery_app.git
-   cd gallery_app
+   git clone https://github.com/J3ZZ3/Expo_Gallery_App.git
+   cd Expo_Gallery_App
    ```
 
 2. Install dependencies:
